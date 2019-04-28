@@ -1,0 +1,22 @@
+{
+  "name": "match3",
+  "version": "1.0.0",
+  "description": "my first game that uses Phaser framework",
+  "main": "index.html",
+  "scripts": {
+    "server": "node ./node_modules/http-server/bin/http-server",
+    "build": "webpack",
+    "start": "webpack --watch & live-server --port=8085"
+  },
+  "author": "Trokhniuk Evhenii",
+  "license": "ISC",
+  "dependencies": {
+    "gulp": "^4.0.1",
+    "http-server": "^0.11.1",
+    "live-server": "^1.2.1",
+    "ts-loader": "^5.4.4",
+    "typescript": "^3.4.5",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.1"
+  }
+}
