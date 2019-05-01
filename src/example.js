@@ -58,7 +58,7 @@ class playGame extends Phaser.Scene {
                     let randomColor = Phaser.Math.Between(0, gameOptions.gemColors - 1);
                     gem.setFrame(randomColor);
                     this.gameArray[i][j] = {
-                        gemColor: randomColor,
+                        gemNumber: randomColor,
                         gemSprite: gem,
                         isEmpty: false
                     }
@@ -72,11 +72,11 @@ class playGame extends Phaser.Scene {
     }
 
     isHorizontalMatch(row, col) {
-        return this.gemAt(row, col).gemColor == this.gemAt(row, col - 1).gemColor && this.gemAt(row, col).gemColor == this.gemAt(row, col - 2).gemColor;
+        return this.gemAt(row, col).gemNumber == this.gemAt(row, col - 1).gemNumber && this.gemAt(row, col).gemNumber == this.gemAt(row, col - 2).gemNumber;
     }
 
     isVerticalMatch(row, col) {
-        return this.gemAt(row, col).gemColor == this.gemAt(row - 1, col).gemColor && this.gemAt(row, col).gemColor == this.gemAt(row - 2, col).gemColor;
+        return this.gemAt(row, col).gemNumber == this.gemAt(row - 1, col).gemNumber && this.gemAt(row, col).gemNumber == this.gemAt(row - 2, col).gemNumber;
     }
 
     gemAt(row, col) {
@@ -168,17 +168,17 @@ class playGame extends Phaser.Scene {
     swapGems(gem1, gem2, swapBack) {
         this.swappingGems = 2;
         this.canPick = false;
-        let fromColor = gem1.gemColor;
+        let fromColor = gem1.gemNumber;
         let fromSprite = gem1.gemSprite;
-        let toColor = gem2.gemColor;
+        let toColor = gem2.gemNumber;
         let toSprite = gem2.gemSprite;
         let gem1Row = this.getGemRow(gem1);
         let gem1Col = this.getGemCol(gem1);
         let gem2Row = this.getGemRow(gem2);
         let gem2Col = this.getGemCol(gem2);
-        this.gameArray[gem1Row][gem1Col].gemColor = toColor;
+        this.gameArray[gem1Row][gem1Col].gemNumber = toColor;
         this.gameArray[gem1Row][gem1Col].gemSprite = toSprite;
-        this.gameArray[gem2Row][gem2Col].gemColor = fromColor;
+        this.gameArray[gem2Row][gem2Col].gemNumber = fromColor;
         this.gameArray[gem2Row][gem2Col].gemSprite = fromSprite;
         this.tweenGem(gem1, gem2, swapBack);
         this.tweenGem(gem2, gem1, swapBack);
@@ -243,9 +243,9 @@ class playGame extends Phaser.Scene {
             let colorToWatch = 0;
             for (let j = 0; j < gameOptions.fieldSize; j++) {
                 if (direction == HORIZONTAL) {
-                    colorToWatch = this.gemAt(i, j).gemColor;
+                    colorToWatch = this.gemAt(i, j).gemNumber;
                 } else {
-                    colorToWatch = this.gemAt(j, i).gemColor;
+                    colorToWatch = this.gemAt(j, i).gemNumber;
                 }
                 if (colorToWatch == currentColor) {
                     colorStreak++;
@@ -313,7 +313,7 @@ class playGame extends Phaser.Scene {
                         });
                         this.gameArray[i + fallTiles][j] = {
                             gemSprite: this.gameArray[i][j].gemSprite,
-                            gemColor: this.gameArray[i][j].gemColor,
+                            gemNumber: this.gameArray[i][j].gemNumber,
                             isEmpty: false
                         }
                         this.gameArray[i][j].isEmpty = true;
@@ -341,7 +341,7 @@ class playGame extends Phaser.Scene {
                 for (let i = 0; i < emptySpots; i++) {
                     replenished++;
                     let randomColor = Phaser.Math.Between(0, gameOptions.gemColors - 1);
-                    this.gameArray[i][j].gemColor = randomColor;
+                    this.gameArray[i][j].gemNumber = randomColor;
                     this.gameArray[i][j].gemSprite = this.poolArray.pop()
                     this.gameArray[i][j].gemSprite.setFrame(randomColor);
                     this.gameArray[i][j].gemSprite.visible = true;
