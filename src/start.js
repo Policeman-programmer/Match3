@@ -50,7 +50,7 @@ function gemSelect(pointer) {
                 game.selectedGem = null;
             } else {
                 if (areNext(pickedGem, game.selectedGem)) {
-                    pickedGem.gemSprite.scale.setTo(1);
+                    game.selectedGem.gemSprite.scale.setTo(1);
                     swapGems(game.selectedGem, pickedGem, true);
                 } else {
                     game.selectedGem.gemSprite.scale.setTo(1);
@@ -114,48 +114,49 @@ function areTheSame(orb1, orb2) {
 }
 
 function getGemRow(orb) {
-    return Math.floor(orb.gemSprite.y / gameOptions.gemWidth);
+    return Math.floor(orb.gemSprite.y / gameOptions.gemHeight);
 }
 
 function getGemCol(orb) {
-    return Math.floor(orb.gemSprite.x / gameOptions.gemHeight);
+    return Math.floor(orb.gemSprite.x / gameOptions.gemWidth);
 }
 
 function swapGems(gem1, gem2, swapBack) {
     game.canPick = false;
-    var fromColor = gem1.gemNumber;
-    var fromSprite = gem1.gemSprite;
-    var toColor = gem2.gemNumber;
-    var toSprite = gem2.gemSprite;
-    game.gameArray[getGemRow(gem1)][getGemCol(gem1)].gemNumber = toColor;
-    game.gameArray[getGemRow(gem1)][getGemCol(gem1)].gemSprite = toSprite;
-    game.gameArray[getGemRow(gem2)][getGemCol(gem2)].gemNumber = fromColor;
-    game.gameArray[getGemRow(gem2)][getGemCol(gem2)].gemSprite = fromSprite;
-    game.add.tween(game.gameArray[getGemRow(gem1)][getGemCol(gem1)].gemSprite).to({
-        x: gem1.gemSprite.position.x,
-        y: gem1.gemSprite.position.y
-    }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
-    var orb2Tween = game.add.tween(game.gameArray[getGemRow(gem2)][getGemCol(gem2)].gemSprite).to({
+
+    game.add.tween(gem1.gemSprite).to({
         x: gem2.gemSprite.position.x,
         y: gem2.gemSprite.position.y
     }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
+    var orb2Tween = game.add.tween(gem2.gemSprite).to({
+        x: gem1.gemSprite.position.x,
+        y: gem1.gemSprite.position.y
+    }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
+
+    var tempGem1 = Object.assign({}, gem1);
+    gem1.gemNumber = gem2.gemNumber;
+    gem1.gemSprite = gem2.gemSprite;
+    gem2.gemNumber = tempGem1.gemNumber;
+    gem2.gemSprite = tempGem1.gemSprite;
+
     orb2Tween.onComplete.add(function () {
         if (!matchInBoard() && swapBack) {
+            game.canPick = true;
             swapGems(gem1, gem2, false);
         } else {
             if (matchInBoard()) {
                 handleMatches();
             } else {
                 game.canPick = true;
-                // selectedOrb = null;
+                game.selectedGem = null;
             }
         }
     });
 }
 
 function matchInBoard(){
-    for(var i = 0; i < gameOptions.fieldWidth; i++){
-        for(var j = 0; j < gameOptions.fieldHeight; j++){
+    for(var i = 0; i < gameOptions.fieldHeight; i++){
+        for(var j = 0; j < gameOptions.fieldWidth; j++){
             if(isMatch(i, j)){
                 return true;
             }
@@ -172,9 +173,10 @@ function handleMatches(){
             removeMap[i].push(0);
         }
     }
-    // handleHorizontalMatches();
+    handleHorizontalMatches();
     // handleVerticalMatches();
     // destroyOrbs();
+    game.canPick = true;
 }
 
 // function handleHorizontalMatches(){
