@@ -197,7 +197,7 @@ class playGame extends Phaser.Scene {
                 this.swappingGems--;
                 if (this.swappingGems == 0) {
                     if (!this.matchInBoard() && swapBack) {
-                        this.swapGems(gem1, gem2, false);
+                        this.swapDonuts(gem1, gem2, false);
                     } else {
                         if (this.matchInBoard()) {
                             this.handleMatches();
