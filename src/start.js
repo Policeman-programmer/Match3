@@ -109,7 +109,7 @@ function donutAt(col, row) {
     if (row < 0 || row >= gameOptions.fieldHeight || col < 0 || col >= gameOptions.fieldWidth) {
         return -1;
     }
-    return game.gameArray[col][row];
+    return game.gameArray[col][row] !== null ? game.gameArray[col][row] : -1;
 }
 
 function areNext(donut1, donut2) {
@@ -174,10 +174,10 @@ function matchInBoard() {
 
 function handleMatches() {
     game.removeMap = [];
-    for (let i = 0; i < gameOptions.fieldWidth; i++) {
-        game.removeMap[i] = [];
-        for (let j = 0; j < gameOptions.fieldHeight; j++) {
-            game.removeMap[i].push(0);
+    for (let col = 0; col < gameOptions.fieldWidth; col++) {
+        game.removeMap[col] = [];
+        for (let row = 0; row < gameOptions.fieldHeight; row++) {
+            game.removeMap[col].push(0);
         }
     }
     checkMatches(HORIZONTAL);
@@ -206,7 +206,11 @@ function checkMatches(direction) {
             }
             if (donutToWatch.donutNumber !== currentNumber || j === gameOptions.fieldWidth - 1) {
                 if (numberStreak >= 3) {
-                    console.log("HORIZONTAL :: Length = " + numberStreak + " :: Start = (" + i + "," + startStreak + ") :: number = " + currentNumber);
+                    if(direction === HORIZONTAL){
+                        console.log("HORIZONTAL :: Length = " + numberStreak + " :: Start = (" + i + "," + startStreak + ") :: number = " + currentNumber);
+                    }else {
+                        console.log("VERTICAL :: Length = "+numberStreak + " :: Start = ("+startStreak+","+i+") :: number = "+currentNumber);
+                    }
                     for (let k = 0; k < numberStreak; k++) {
                         direction === HORIZONTAL ? game.removeMap[i][startStreak + k]++ : game.removeMap[startStreak + k][i]++;
                     }
@@ -223,6 +227,9 @@ function destroyDonuts() {
     let destroyed = 0;
     for (let col = 0; col < gameOptions.fieldWidth; col++) {
         for (let row = 0; row < gameOptions.fieldHeight; row++) {
+            if(game.gameArray[col][row] == null){
+                continue
+            }
             if (game.removeMap[col][row] > 0) {
                 let destroyTween = game.add.tween(game.gameArray[col][row].donutSprite).to({
                     alpha: 0
@@ -261,12 +268,12 @@ function makeDonutsFall() {
                         donutNumber: game.gameArray[col][row].donutNumber
                     };
                     game.gameArray[col][row] = null;
-                    makeDonutsFall();
+                    // makeDonutsFall();
                 }
             }
         }
     }
-    replenishField();
+    // replenishField();
 }
 
 function replenishField() {
@@ -291,19 +298,19 @@ function replenishField() {
                 // }, gameOptions.fallSpeed, Phaser.Easing.Linear.None, true);
                 // replenished++;
                 // orb2Tween.onComplete.add(function () {
-                    replenished--;
-                    if (replenished === 0) {
-                        if (restart) {
+                //     replenished--;
+                //     if (replenished === 0) {
+                //         if (restart) {
                             makeDonutsFall();
-                        } else {
+                        // } else {
                             if (matchInBoard()) {
                                 game.time.events.add(250, handleMatches);
                             } else {
                                 game.canPick = true;
                                 selectedOrb = null;
                             }
-                        }
-                    }
+                        // }
+                    // }
                 // })
             }
         }
