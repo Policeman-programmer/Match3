@@ -355,7 +355,7 @@ function replenishField(){
                 gameArray[i][j] = {
                     orbColor: randomColor,
                     donutSprite: orb
-                }
+                };
                 var orb2Tween = game.add.tween(gameArray[i][j].donutSprite).to({
                     y: orbSize * i + orbSize / 2
                 }, fallSpeed, Phaser.Easing.Linear.None, true);
