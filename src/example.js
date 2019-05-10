@@ -19,7 +19,7 @@ window.onload = function () {
     window.focus()
     resize();
     window.addEventListener("resize", resize, false);
-}
+};
 
 class playGame extends Phaser.Scene {
     constructor() {

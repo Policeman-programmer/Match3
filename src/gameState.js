@@ -9,60 +9,118 @@ let gameOptions = {
     destroySpeed: 200
 };
 
-var score = 0,
-    scoreText,
-    timerText,
-    startTime_ms = 0,
-    start = {};
+let audioKill,
+    audioSelect,
+    audioSelect4,
+    shadowOffset = 10;
 
-const DONUT_WERE_EATEN = "Donuts were eaten: ",
-    TIME_FROM_START = "Time from start: ";
+var score = 0;
 
-start.state1 = function () {
+const TIME = "Time: ",
+    timeAtStart_ms = 30000;
+
+WebFontConfig = {
+    google: {families: ['Fredoka One']}
 };
-start.state1.prototype = {
+
+state.gameState = function () {
+};
+state.gameState.prototype = {
     preload: function () {
+        game.load.script("webfont", "//fonts.googleapis.com/css?family=Fredoka+One");
         game.load.image("background", "./resources/images/backgrounds/background.jpg");
         game.load.image("shadow", "./resources/images/game/shadow.png");
+        game.load.image("score", "./resources/images/bg-score.png");
+        game.load.image("timeup", "./resources/images/text-timeup.png");
         for (let i = 1; i <= gameOptions.donutTypes; i++) {
             game.load.image('donut' + i, './resources/images/game/gem-' + i + '.png');
         }
+
+        game.load.audio('startMusic', ['./resources/audio/background.mp3']);
+        game.load.audio('select', ['./resources/audio/select-1.mp3']);
+        game.load.audio('select4', ['./resources/audio/select-4.mp3']);
+        game.load.audio('kill', ['./resources/audio/kill.mp3']);
     },
     create: function () {
-        game.stage.backgroundColor = '#fffa90';
+        game.stage.backgroundColor = backgroundColor;
         game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         game.add.sprite(0, 0, "background");
-        //toDo: make cool font
-        scoreText = game.add.text(game.world.centerX, gameHeight, DONUT_WERE_EATEN + score, {
-            font: "65px Arial",
-            fill: "#5151b0",
+        game.add.sprite(0, gameHeight, "score");
+        game.scoreText = game.add.text(scoreWidth / 2, gameHeight + scoreHeight / 2, score, {
+            font: "65px Fredoka One",
+            fill: "#f8fffd",
             align: "center"
         });
-        scoreText.anchor.setTo(0.5, 0);
+        game.scoreText.anchor.setTo(0.5, 0.6);
 
-        timerText = game.add.text(game.world.centerX, gameHeight + scoreText.height, null, {
-            font: "65px Arial",
-            fill: "#5151b0",
+        game.timerText = game.add.text(scoreWidth, gameHeight + scoreHeight / 2, null, {
+            font: "65px Fredoka One",
+            fill: "#fbfbff",
             align: "center"
         });
-        timerText.anchor.setTo(0.5, 0);
-        startTime_ms = new Date().getTime();
+        game.timerText.anchor.setTo(0, 0.6);
+        game.timeTo_ms = new Date().getTime() + timeAtStart_ms;
+
+        // game.add.audio('startMusic').play();
+        audioKill = game.add.audio('kill');
+        audioSelect = game.add.audio('select');
+        audioSelect4 = game.add.audio('select4');
 
         drawField();
         game.canPick = true;
         game.selectedDonut = null;
         game.donutGroup.onChildInputDown.add(donutSelect, this);
-        game.cursorShadow = null;
-        game.donutGroup.onChildInputOver.add(onOver, this);
     },
     update: function () {
-        scoreText.text = DONUT_WERE_EATEN + score;
-        timerText.text = TIME_FROM_START + millisecondsToTime(new Date().getTime(), startTime_ms);
+        game.scoreText.text = score;
+        let timeDistance_ms = game.timeTo_ms - new Date().getTime();
+        game.timerText.text = TIME + millisecondsToTime(timeDistance_ms);
+        if (timeDistance_ms <= 0) {
+            gameOver();
+        }
     }
 };
 
-function millisecondsToTime(timeStampFrom, timeStampTo) {
-    let secs = (timeStampFrom - timeStampTo) / 1000;
+function drawField() {
+    game.gameArray = [];
+    game.donutGroup = game.add.group();
+    game.donutGroup.inputEnableChildren = true;
+    for (let col = 0; col < gameOptions.fieldWidth; col++) {
+        game.gameArray[col] = [];
+        for (let row = 0; row < gameOptions.fieldHeight; row++) {
+            do {
+                if (game.gameArray[col][row] && game.gameArray[col][row] !== undefined) {
+                    game.gameArray[col][row].shadow.destroy();
+                    game.gameArray[col][row].donutSprite.destroy();
+                    game.gameArray[col][row] = null;
+                }
+                let randomNumber = game.math.between(1, gameOptions.donutTypes);
+                let donutShadow = game.donutGroup.create(gameOptions.donutWidth * col + shadowOffset, gameOptions.donutHeight * row + shadowOffset, "shadow");
+                let donut = game.donutGroup.create(gameOptions.donutWidth * col, gameOptions.donutHeight * row, "donut" + randomNumber);
+                game.gameArray[col][row] = {
+                    donutNumber: randomNumber,
+                    donutSprite: donut,
+                    shadow: donutShadow
+                };
+            } while (isMatch(col, row));
+        }
+    }
+}
+
+function gameOver() {
+    game.timerText.text = TIME + millisecondsToTime(0);
+    game.canPick = false;
+    let timeUp = game.add.sprite(game.world.centerX, game.world.centerY, "timeup");
+    timeUp.anchor.setTo(0.5, 0.9);
+    game.add.button(timeUp.x, timeUp.y + timeUp.height, 'btn-play', actionOnClick, this, 2, 1, 0).anchor.setTo(0.5, 0.5);
+
+    function actionOnClick() {
+        game.state.start('gameState');
+    }
+}
+
+function millisecondsToTime(timeDistance_ms) {
+    let secs = (timeDistance_ms) / 1000;
     let hours = Math.floor(secs / (60 * 60));
     let divisor_for_minutes = secs % (60 * 60);
     let minutes = Math.floor(divisor_for_minutes / 60);
@@ -70,8 +128,8 @@ function millisecondsToTime(timeStampFrom, timeStampTo) {
     let seconds = Math.ceil(divisor_for_seconds);
     return plusZero(hours) + ":" + plusZero(minutes) + ":" + plusZero(seconds);
 
-    function plusZero(number){
-        return number.toString().length < 2 ? number = '0' + number : number;
+    function plusZero(number) {
+        return number.toString().length < 2 ? '0' + number : number;
     }
 }
 
@@ -89,113 +147,67 @@ function donutSelect(pointer) {
     console.log('donutCol(x) :' + col + "; donutRow(y) :" + row);
     if (pickedDonut !== -1) {
         if (game.selectedDonut == null) {
-            pickedDonut.donutSprite.scale.setTo(1.2);
+            audioSelect.play();
+            pickedDonut.shadow.scale.setTo(1.1);
+            pickedDonut.donutSprite.scale.setTo(1.1);
             pickedDonut.donutSprite.bringToTop();
             game.selectedDonut = pickedDonut;
         } else {
             if (areTheSame(pickedDonut, game.selectedDonut)) {
+                pickedDonut.shadow.scale.setTo(1);
                 pickedDonut.donutSprite.scale.setTo(1);
                 game.selectedDonut = null;
             } else {
                 if (areNext(pickedDonut, game.selectedDonut)) {
+                    audioSelect4.play();
+                    game.selectedDonut.shadow.scale.setTo(1);
                     game.selectedDonut.donutSprite.scale.setTo(1);
                     swapDonuts(game.selectedDonut, pickedDonut, true);
                     game.selectedDonut = null;
                 } else {
+                    audioSelect.play();
+                    game.selectedDonut.shadow.scale.setTo(1);
                     game.selectedDonut.donutSprite.scale.setTo(1);
-                    pickedDonut.donutSprite.scale.setTo(1.2);
+                    pickedDonut.shadow.scale.setTo(1.1);
+                    pickedDonut.donutSprite.scale.setTo(1.1);
                     game.selectedDonut = pickedDonut;
                 }
             }
         }
     }
-}
 
-
-function onOver(donut) {
-    // if(game.cursorShadow){
-    //     game.cursorShadow.destroy();
-    // }
-    // game.cursorShadow = game.add.sprite(donut.position.x, donut.position.y, "shadow");
-}
-
-
-function drawField() {
-    game.gameArray = [];
-    game.donutGroup = game.add.group();
-    game.donutGroup.inputEnableChildren = true;
-    for (let col = 0; col < gameOptions.fieldWidth; col++) {
-        game.gameArray[col] = [];
-        for (let row = 0; row < gameOptions.fieldHeight; row++) {
-            do {
-                if (game.gameArray[col][row] && game.gameArray[col][row] !== undefined) {
-                    deleteDonut(col, row);
-                    console.log("deleted donut at col :" + col + " row :" + row);
-                }
-                let randomNumber = game.math.between(1, gameOptions.donutTypes);
-                let donut = game.donutGroup.create(gameOptions.donutWidth * col, gameOptions.donutHeight * row, "donut" + randomNumber);
-                game.gameArray[col][row] = {
-                    donutNumber: randomNumber,
-                    donutSprite: donut,
-                    isEmpty: false
-                };
-            } while (isMatch(col, row));
-        }
+    function areNext(donut1, donut2) {
+        return Math.abs(getDonutRow(donut1) - getDonutRow(donut2)) + Math.abs(getDonutCol(donut1) - getDonutCol(donut2)) === 1;
     }
-}
 
-function isMatch(col, row) {
-    return isHorizontalMatch(col, row) || isVerticalMatch(col, row);
-}
-
-function isHorizontalMatch(col, row) {
-    return donutAt(col, row) !== -1 && donutAt(col, row).donutNumber === donutAt(col - 1, row).donutNumber && donutAt(col, row).donutNumber === donutAt(col - 2, row).donutNumber;
-}
-
-function isVerticalMatch(col, row) {
-    return donutAt(col, row) !== -1 && donutAt(col, row).donutNumber === donutAt(col, row - 1).donutNumber && donutAt(col, row).donutNumber === donutAt(col, row - 2).donutNumber;
-}
-
-function donutAt(col, row) {
-    if (row < 0 || row >= gameOptions.fieldHeight || col < 0 || col >= gameOptions.fieldWidth) {
-        return -1;
+    function areTheSame(donut1, donut2) {
+        return getDonutRow(donut1) == getDonutRow(donut2) && getDonutCol(donut1) === getDonutCol(donut2);
     }
-    return game.gameArray[col][row] !== null ? game.gameArray[col][row] : -1;
-}
-
-function areNext(donut1, donut2) {
-    return Math.abs(getDonutRow(donut1) - getDonutRow(donut2)) + Math.abs(getDonutCol(donut1) - getDonutCol(donut2)) === 1;
-}
-
-function areTheSame(donut1, donut2) {
-    return getDonutRow(donut1) == getDonutRow(donut2) && getDonutCol(donut1) === getDonutCol(donut2);
-}
-
-function getDonutRow(donut) {
-    return Math.floor(donut.donutSprite.y / gameOptions.donutHeight);
-}
-
-function getDonutCol(donut) {
-    return Math.floor(donut.donutSprite.x / gameOptions.donutWidth);
 }
 
 function swapDonuts(donut1, donut2, swapBack) {
     game.canPick = false;
 
-    game.add.tween(donut1.donutSprite).to({
-        x: donut2.donutSprite.position.x,
-        y: donut2.donutSprite.position.y
-    }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
-    var orb2Tween = game.add.tween(donut2.donutSprite).to({
-        x: donut1.donutSprite.position.x,
-        y: donut1.donutSprite.position.y
-    }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
+    function swapSprites(sprite1, sprite2) {
+        return game.add.tween(sprite1).to({
+            x: sprite2.position.x,
+            y: sprite2.position.y
+        }, gameOptions.swapSpeed, Phaser.Easing.Linear.None, true);
+    }
+
+    swapSprites(donut1.shadow,donut2.shadow);
+    swapSprites(donut1.donutSprite,donut2.donutSprite);
+
+    swapSprites(donut2.shadow,donut1.shadow);
+    var orb2Tween = swapSprites(donut2.donutSprite,donut1.donutSprite);
 
     var tempDonut1 = Object.assign({}, donut1);
     donut1.donutNumber = donut2.donutNumber;
     donut1.donutSprite = donut2.donutSprite;
+    donut1.shadow = donut2.shadow;
     donut2.donutNumber = tempDonut1.donutNumber;
     donut2.donutSprite = tempDonut1.donutSprite;
+    donut2.shadow = tempDonut1.shadow;
 
     orb2Tween.onComplete.add(function () {
         if (!matchInBoard() && swapBack) {
@@ -311,36 +323,44 @@ function checkVerticalMatches() {
 
 function destroyDonuts() {
     let destroyed = 0;
+
     for (let col = 0; col < gameOptions.fieldWidth; col++) {
         for (let row = 0; row < gameOptions.fieldHeight; row++) {
             if (game.gameArray[col][row] == null)
                 continue;
             if (game.removeMap[col][row] > 0) {
-                let destroyTween = game.add.tween(game.gameArray[col][row].donutSprite).to({
-                    alpha: 0
-                }, gameOptions.destroySpeed, Phaser.Easing.Linear.None, true);
+                // game.gameArray[col][row].shadow.destroy();
+                let shadowTween = disappear(game.gameArray[col][row].shadow);
+                let destroyTween = disappear(game.gameArray[col][row].donutSprite);
                 game.gameArray[col][row] = null;
                 destroyed++;
                 score++;
-                destroyTween.onComplete.add(function (donut) {
-                    donut.destroy();
-                    destroyed--;
-                    if (destroyed === 0) {
-                        makeDonutsFall()
-                    }
+                game.timeTo_ms += 1000;
+                shadowTween.onComplete.add(function (shadow) {
+                    shadow.destroy();
+                    destroyTween.onComplete.add(function (donut) {
+                        donut.destroy();
+                        destroyed--;
+                        if (destroyed === 0) {
+                            audioKill.play();
+                            makeDonutsFall()
+                        }
+                    });
                 });
             }
         }
     }
-}
 
-function deleteDonut(col, row) {
-    game.gameArray[col][row].donutSprite.destroy();
-    game.gameArray[col][row] = null;
+    function disappear(sprite) {
+        return game.add.tween(sprite).to({
+            alpha: 0
+        }, gameOptions.destroySpeed, Phaser.Easing.Linear.None, true);
+    }
 }
 
 function makeDonutsFall() {
     let fallen = 0;
+
     for (let row = gameOptions.fieldHeight - 2; row >= 0; row--) {
         for (let col = 0; col < gameOptions.fieldWidth; col++) {
             if (game.gameArray[col][row] == null) {
@@ -348,24 +368,27 @@ function makeDonutsFall() {
             }
             let holesBelow = getHolesBelow(col, row);
             if (holesBelow > 0) {
-                let donutOverHoles = game.gameArray[col][row].donutSprite;
-                let donut2Tween = game.add.tween(donutOverHoles).to({
-                    y: donutOverHoles.position.y + holesBelow * gameOptions.donutHeight
-                }, gameOptions.fallSpeed, Phaser.Easing.Linear.None, true);
+                let donutOverHoles = game.gameArray[col][row].donutSprite,
+                    donutShadow = game.gameArray[col][row].shadow,
+                    shadow2Tween = fallTo(donutShadow, holesBelow),
+                    donut2Tween = fallTo(donutOverHoles, holesBelow);
                 game.gameArray[col][row + holesBelow] = {
                     donutSprite: game.gameArray[col][row].donutSprite,
-                    donutNumber: game.gameArray[col][row].donutNumber
+                    donutNumber: game.gameArray[col][row].donutNumber,
+                    shadow: game.gameArray[col][row].shadow
                 };
                 game.gameArray[col][row] = null;
                 fallen++;
-                donut2Tween.onComplete.add(function () {
-                    fallen--;
-                    if (fallen === 0) {
-                        replenishField();
-                        if (matchInBoard()) {
-                            handleMatches();
+                shadow2Tween.onComplete.add(function () {
+                    donut2Tween.onComplete.add(function () {
+                        fallen--;
+                        if (fallen === 0) {
+                            replenishField();
+                            if (matchInBoard()) {
+                                handleMatches();
+                            }
                         }
-                    }
+                    });
                 });
             }
         }
@@ -376,18 +399,26 @@ function makeDonutsFall() {
             handleMatches();
         }
     }
+
+
+    function fallTo(sprite, holesBelow) {
+        return game.add.tween(sprite).to({
+            y: sprite.position.y + holesBelow * gameOptions.donutHeight
+        }, gameOptions.fallSpeed, Phaser.Easing.Linear.None, true);
+    }
 }
 
-function replenishField() { //todo: make donuts full from up side not just appear at empty sell
-    // let replenished = 0;
+function replenishField() { //todo: make donuts full from up side down, not just appear at empty sell
     for (let row = gameOptions.fieldHeight - 1; row >= 0; row--) {
         for (let col = 0; col < gameOptions.fieldWidth; col++) {
             if (game.gameArray[col][row] == null) {
                 let randomNumber = game.math.between(1, gameOptions.donutTypes);
+                let donutShadow = game.donutGroup.create(gameOptions.donutWidth * col + shadowOffset, gameOptions.donutHeight * row + shadowOffset, "shadow");
                 let donut = game.donutGroup.create(gameOptions.donutWidth * col, gameOptions.donutHeight * row, "donut" + randomNumber);
                 game.gameArray[col][row] = {
                     donutNumber: randomNumber,
-                    donutSprite: donut
+                    donutSprite: donut,
+                    shadow: donutShadow
                 };
             }
         }
@@ -434,17 +465,16 @@ function replenishField() { //todo: make donuts full from up side not just appea
 //             }
 //         }
 //     }
+// function getHolesInCol(col) {
+//     let result = 0;
+//     for (let row = 0; row < gameOptions.fieldHeight; row++) {
+//         if (game.gameArray[col][row] == null) {
+//             result++;
+//         }
+//     }
+//     return result;
 // }
-
-function getHolesInCol(col) {
-    let result = 0;
-    for (let row = 0; row < gameOptions.fieldHeight; row++) {
-        if (game.gameArray[col][row] == null) {
-            result++;
-        }
-    }
-    return result;
-}
+// }
 
 function getHolesBelow(col, row) {
     let result = 0;
@@ -456,4 +486,30 @@ function getHolesBelow(col, row) {
     return result;
 }
 
+function isMatch(col, row) {
+    return isHorizontalMatch(col, row) || isVerticalMatch(col, row);
+}
+
+function isHorizontalMatch(col, row) {
+    return donutAt(col, row) !== -1 && donutAt(col, row).donutNumber === donutAt(col - 1, row).donutNumber && donutAt(col, row).donutNumber === donutAt(col - 2, row).donutNumber;
+}
+
+function isVerticalMatch(col, row) {
+    return donutAt(col, row) !== -1 && donutAt(col, row).donutNumber === donutAt(col, row - 1).donutNumber && donutAt(col, row).donutNumber === donutAt(col, row - 2).donutNumber;
+}
+
+function donutAt(col, row) {
+    if (row < 0 || row >= gameOptions.fieldHeight || col < 0 || col >= gameOptions.fieldWidth) {
+        return -1;
+    }
+    return game.gameArray[col][row] !== null ? game.gameArray[col][row] : -1;
+}
+
+function getDonutRow(donut) {
+    return Math.floor(donut.donutSprite.y / gameOptions.donutHeight);
+}
+
+function getDonutCol(donut) {
+    return Math.floor(donut.donutSprite.x / gameOptions.donutWidth);
+}
 
