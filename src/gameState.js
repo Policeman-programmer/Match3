@@ -30,7 +30,8 @@ WebFontConfig = {
     google: {families: ['Fredoka One']}
 };
 
-state.gameState = function () {};
+state.gameState = function () {
+};
 
 state.gameState.prototype = {
     preload: function () {
@@ -66,7 +67,7 @@ state.gameState.prototype = {
 
         game.add.sprite(0, 0, "background");
         game.add.sprite(0, gameHeight, "score");
-        hand = game.add.sprite(game.world._height, game.world._width, "hand");
+        hand = game.add.sprite(game.world.centerX * 2, game.world.centerY * 2, "hand");
 
         game.scoreText = game.add.text(scoreWidth / 2, gameHeight + scoreHeight / 2, score, {
             font: "65px Fredoka One",
@@ -98,8 +99,8 @@ state.gameState.prototype = {
 
         game.physics.startSystem(Phaser.Physics.ARCADE);
         emitter = game.add.emitter(0, 0, 100);
-        let keyAndFrameArr = ['particle_ex1','particle_ex2','particle_ex3'];
-        emitter.makeParticles(keyAndFrameArr,keyAndFrameArr);
+        let keyAndFrameArr = ['particle_ex1', 'particle_ex2', 'particle_ex3'];
+        emitter.makeParticles(keyAndFrameArr, keyAndFrameArr);
         emitter.gravity = 1000;
     },
     update: function () {
@@ -253,8 +254,8 @@ function swapDonuts(donut1, donut2, swapBack) {
 
     var tempDonut1 = Object.assign({}, donut1);
 
-    replaceDonut(donut1,donut2);
-    replaceDonut(donut2,tempDonut1);
+    replaceDonut(donut1, donut2);
+    replaceDonut(donut2, tempDonut1);
 
     orb2Tween.onComplete.add(function () {
         if (!matchInBoard() && swapBack) {
@@ -270,7 +271,7 @@ function swapDonuts(donut1, donut2, swapBack) {
         }
     });
 
-    function replaceDonut(donut1,donut2) {
+    function replaceDonut(donut1, donut2) {
         donut1.donutNumber = donut2.donutNumber;
         donut1.donutSprite = donut2.donutSprite;
         donut1.shadow = donut2.shadow;
@@ -386,8 +387,8 @@ function destroyDonuts() {
                     shadowDestroyed = disappear(game.gameArray[col][row].shadow),
                     donutDestroyed = disappear(donutToDestroy);
 
-                emitter.x = donutToDestroy.x + gameOptions.donutWidth/2;
-                emitter.y = donutToDestroy.y + gameOptions.donutHeight/2;
+                emitter.x = donutToDestroy.x + gameOptions.donutWidth / 2;
+                emitter.y = donutToDestroy.y + gameOptions.donutHeight / 2;
                 emitter.start(true, 500, null, 8);
 
                 game.gameArray[col][row] = null;
