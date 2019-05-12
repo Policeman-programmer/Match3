@@ -7,12 +7,14 @@ state.startState.prototype = {
     preload: function () {
         game.load.image("background", "./resources/images/backgrounds/background.jpg");
         game.load.image("btn-play", "./resources/images/btn-play.png");
+        game.load.image("donuts", "./resources/images/donuts_logo.png");
     },
     create: function () {
         game.stage.backgroundColor = '#f8fffd';
         game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
         game.add.sprite(0, 0, "background");
-        button = game.add.button(game.world.centerX - 95, 400, 'btn-play', actionOnClick, this, 2, 1, 0);
+        game.add.sprite(game.world.centerX, game.world.centerY/2, "donuts").anchor.setTo(0.5, 0.5);
+        game.add.button(game.world.centerX - 130, 400, 'btn-play', actionOnClick, this, 2, 1, 0);
     },
     update: function () {
 
