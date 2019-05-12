@@ -1,7 +1,0 @@
-.idea/
-.gitignore
-package.json
-package-lock.json
-example.js
-example2.js
-node_modules/
